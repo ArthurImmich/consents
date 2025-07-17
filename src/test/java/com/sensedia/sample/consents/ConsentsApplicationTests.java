@@ -1,15 +1,14 @@
 package com.sensedia.sample.consents;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.SpringApplication;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
-class ConsentsApplicationTests {
+import com.sensedia.sample.consents.config.TestConfig;
 
-	@Test
-	void contextLoads() {
-	}
+public class ConsentsApplicationTests {
 
+    public static void main(String[] args) {
+        SpringApplication.from(ConsentsApplication::main)
+                .with(TestConfig.class)
+                .run(args);
+    }
 }

@@ -108,9 +108,16 @@ class ConsentControllerIntegrationTest {
 				.expirationDateTime(LocalDateTime.now().plusDays(30))
 				.additionalInfo("Test info2")
 				.build();
+		Consent consent3 = Consent.builder()
+				.cpf("661.527.150-94")
+				.status(ConsentStatus.REVOKED)
+				.expirationDateTime(LocalDateTime.now().plusDays(30))
+				.additionalInfo("Test info3")
+				.build();
 
 		consent1 = consentRepository.save(consent1).block();
 		consent2 = consentRepository.save(consent2).block();
+		consent3 = consentRepository.save(consent3).block();
 
 		webTestClient.get().uri(API_URL + "?page=0&size=2")
 				.exchange()
@@ -118,6 +125,12 @@ class ConsentControllerIntegrationTest {
 				.expectBody()
 				.jsonPath("$").isArray()
 				.jsonPath("$.length()").isEqualTo(2);
+		webTestClient.get().uri(API_URL + "?page=1&size=2")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$").isArray()
+				.jsonPath("$.length()").isEqualTo(1);
 	}
 
 	@Test
