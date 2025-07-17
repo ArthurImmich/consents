@@ -1,0 +1,8 @@
+server:
+  port: 8099
+spring:
+  application:
+    name: consents
+  data:
+    mongodb:
+      uri: mongodb://usuario:senha@servidor:27017/SEU_BANCO
