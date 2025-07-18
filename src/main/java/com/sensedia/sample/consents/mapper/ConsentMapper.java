@@ -13,10 +13,12 @@ public interface ConsentMapper {
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "creationDateTime", ignore = true)
+	@Mapping(target = "version", ignore = true)
 	Consent toEntity(ConsentRequestCreateDTO dto);
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "creationDateTime", ignore = true)
+	@Mapping(target = "version", ignore = true)
 	Consent toEntity(ConsentRequestUpdateDTO dto);
 
 	ConsentResponseDTO toResponseDTO(Consent consent);

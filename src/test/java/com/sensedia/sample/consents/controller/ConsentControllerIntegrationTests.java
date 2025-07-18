@@ -28,6 +28,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,7 +108,10 @@ class ConsentControllerIntegrationTests {
 	@DisplayName("GET /consents/{id} - Deve encontrar um consentimento por ID e retornar 200 OK")
 	void shouldFindConsentById() {
 		Consent savedConsent = consentRepository
-				.save(Consent.builder().cpf(CPF_VALIDO_2).status(ConsentStatus.ACTIVE).build())
+				.save(Consent.builder()
+					.id(UUID.randomUUID())
+					.cpf(CPF_VALIDO_2)
+					.status(ConsentStatus.ACTIVE).build())
 				.block();
 		assertNotNull(savedConsent);
 

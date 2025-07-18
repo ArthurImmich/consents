@@ -29,4 +29,9 @@ public class ConsentService {
 				.map(mapper::toResponseDTO);
 	}
 
+	public Mono<ConsentResponseDTO> getById(String id) {
+		return repository.findById(UUID.fromString(id))
+				.map(mapper::toResponseDTO);
+	}
+
 }
