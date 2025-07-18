@@ -166,11 +166,16 @@ class ConsentControllerIntegrationTests {
 	@DisplayName("PUT /consents/{id} - Deve atualizar um consentimento e retornar 200 OK")
 	void shouldUpdateConsent() {
 		Consent savedConsent = consentRepository
-				.save(Consent.builder().cpf(CPF_VALIDO_2).status(ConsentStatus.ACTIVE).build())
+				.save(Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_2).status(ConsentStatus.ACTIVE).build())
 				.block();
 		assertNotNull(savedConsent);
 
 		ConsentRequestUpdateDTO request = new ConsentRequestUpdateDTO(null, ConsentStatus.REVOKED, null, null);
+
+		Consent beforeUpdatedInDb = consentRepository.findById(savedConsent.getId()).block();
+		assertNotNull(beforeUpdatedInDb);
+		assertEquals(ConsentStatus.ACTIVE, beforeUpdatedInDb.getStatus());
+		assertNotNull(beforeUpdatedInDb.getCpf());
 
 		webTestClient.put()
 				.uri(API_URL + "/{id}", savedConsent.getId())
@@ -179,11 +184,15 @@ class ConsentControllerIntegrationTests {
 				.exchange()
 				.expectStatus().isOk()
 				.expectBody(ConsentResponseDTO.class)
-				.value(response -> assertEquals(ConsentStatus.REVOKED, response.status()));
+				.value(response -> {
+					assertEquals(ConsentStatus.REVOKED, response.status());
+					assertNotNull(response.cpf());
+				});
 
 		Consent updatedInDb = consentRepository.findById(savedConsent.getId()).block();
 		assertNotNull(updatedInDb);
 		assertEquals(ConsentStatus.REVOKED, updatedInDb.getStatus());
+		assertNotNull(updatedInDb.getCpf());
 	}
 
 	@Test

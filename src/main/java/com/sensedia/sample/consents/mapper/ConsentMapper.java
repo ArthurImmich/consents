@@ -5,8 +5,11 @@ import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring")
 public interface ConsentMapper {
@@ -19,7 +22,8 @@ public interface ConsentMapper {
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "creationDateTime", ignore = true)
 	@Mapping(target = "version", ignore = true)
-	Consent toEntity(ConsentRequestUpdateDTO dto);
+	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+	Consent merge(ConsentRequestUpdateDTO dto, @MappingTarget Consent consent);
 
 	ConsentResponseDTO toResponseDTO(Consent consent);
 
