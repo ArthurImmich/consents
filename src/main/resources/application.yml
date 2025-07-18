@@ -3,6 +3,9 @@ server:
 spring:
   application:
     name: consents
-  data:
-    mongodb:
-      uri: mongodb://usuario:senha@servidor:27017/SEU_BANCO
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+  # data:
+    # mongodb:
+      # uri: mongodb://usuario:senha@servidor:27017/SEU_BANCO

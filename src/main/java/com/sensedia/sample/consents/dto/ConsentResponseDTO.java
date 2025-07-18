@@ -1,12 +1,13 @@
 package com.sensedia.sample.consents.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.sensedia.sample.consents.domain.ConsentStatus;
 
 public record ConsentResponseDTO(
 
-        String id,
+        UUID id,
 
         String cpf,
 
