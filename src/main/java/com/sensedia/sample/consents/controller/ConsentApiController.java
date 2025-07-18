@@ -1,6 +1,10 @@
 package com.sensedia.sample.consents.controller;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sensedia.sample.consents.controller.interfaces.IConsentApiController;
@@ -24,9 +28,19 @@ public class ConsentApiController implements IConsentApiController {
 	private final ConsentService service;
 
 	@Override
-	public Mono<PageDTO<ConsentResponseDTO>> getAll(int page, int size) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getAll'");
+	public Mono<PageDTO<ConsentResponseDTO>> getAllBy(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size,
+			@RequestParam(defaultValue = "creationDateTime") String sort,
+			@RequestParam(defaultValue = "desc") String direction) {
+
+		Sort sortObj = direction.equalsIgnoreCase("asc")
+				? Sort.by(sort).ascending()
+				: Sort.by(sort).descending();
+
+		Pageable pageable = PageRequest.of(page, size, sortObj);
+
+		return service.getAllBy(pageable);
 	}
 
 	@Override

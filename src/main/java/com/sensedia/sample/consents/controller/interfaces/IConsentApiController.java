@@ -1,7 +1,6 @@
 package com.sensedia.sample.consents.controller.interfaces;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +20,7 @@ import jakarta.validation.Valid;
 import reactor.core.publisher.Mono;
 
 @RequestMapping("/api/v1/consents")
-@Validated
+
 public interface IConsentApiController {
 
 	@PostMapping
@@ -29,9 +28,11 @@ public interface IConsentApiController {
 	public Mono<ConsentResponseDTO> create(@Valid @RequestBody ConsentRequestCreateDTO request);
 
 	@GetMapping(produces = { "application/json" })
-	public Mono<PageDTO<ConsentResponseDTO>> getAll(
+	public Mono<PageDTO<ConsentResponseDTO>> getAllBy(
 			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "20") int size);
+			@RequestParam(defaultValue = "20") int size,
+			@RequestParam(defaultValue = "creationDateTime") String sort,
+			@RequestParam(defaultValue = "desc") String direction);
 
 	@GetMapping("/{id}")
 	public Mono<ConsentResponseDTO> getById(@PathVariable String id);

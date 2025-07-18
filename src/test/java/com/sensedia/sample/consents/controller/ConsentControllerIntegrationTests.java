@@ -109,9 +109,9 @@ class ConsentControllerIntegrationTests {
 	void shouldFindConsentById() {
 		Consent savedConsent = consentRepository
 				.save(Consent.builder()
-					.id(UUID.randomUUID())
-					.cpf(CPF_VALIDO_2)
-					.status(ConsentStatus.ACTIVE).build())
+						.id(UUID.randomUUID())
+						.cpf(CPF_VALIDO_2)
+						.status(ConsentStatus.ACTIVE).build())
 				.block();
 		assertNotNull(savedConsent);
 
@@ -129,9 +129,9 @@ class ConsentControllerIntegrationTests {
 	@Test
 	@DisplayName("GET /consents - Deve listar todos os consentimentos com paginação")
 	void shouldListAllConsents() {
-		Consent c1 = Consent.builder().cpf(CPF_VALIDO_1).status(ConsentStatus.ACTIVE).build();
-		Consent c2 = Consent.builder().cpf(CPF_VALIDO_2).status(ConsentStatus.REVOKED).build();
-		Consent c3 = Consent.builder().cpf(CPF_VALIDO_3).status(ConsentStatus.ACTIVE).build();
+		Consent c1 = Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_1).status(ConsentStatus.ACTIVE).build();
+		Consent c2 = Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_2).status(ConsentStatus.REVOKED).build();
+		Consent c3 = Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_3).status(ConsentStatus.ACTIVE).build();
 
 		List<Consent> consentsToSave = List.of(c1, c2, c3);
 		consentRepository.saveAll(consentsToSave).blockLast();
@@ -139,12 +139,24 @@ class ConsentControllerIntegrationTests {
 		ParameterizedTypeReference<PageDTO<ConsentResponseDTO>> pageDtoType = new ParameterizedTypeReference<>() {
 		};
 
-		webTestClient.get().uri(API_URL + "?page=0&size=2")
+		webTestClient.get()
+				.uri(API_URL + "?page=0&size=2")
 				.exchange()
 				.expectStatus().isOk()
 				.expectBody(pageDtoType)
 				.value(page -> {
 					assertEquals(2, page.content().size());
+					assertEquals(3, page.totalElements());
+					assertEquals(2, page.totalPages());
+				});
+
+		webTestClient.get()
+				.uri(API_URL + "?page=1&size=2")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(pageDtoType)
+				.value(page -> {
+					assertEquals(1, page.content().size());
 					assertEquals(3, page.totalElements());
 					assertEquals(2, page.totalPages());
 				});
