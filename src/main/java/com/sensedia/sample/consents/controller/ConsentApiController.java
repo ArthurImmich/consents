@@ -36,8 +36,7 @@ public class ConsentApiController implements IConsentApiController {
 
 	@Override
 	public Mono<ConsentResponseDTO> getById(String id) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getById'");
+		return service.getById(id);
 	}
 
 	@Override
