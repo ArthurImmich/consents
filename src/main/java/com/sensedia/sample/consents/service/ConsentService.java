@@ -6,12 +6,16 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.sensedia.sample.consents.domain.ActionType;
+import com.sensedia.sample.consents.domain.Consent;
+import com.sensedia.sample.consents.domain.ConsentLog;
 import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 import com.sensedia.sample.consents.dto.PageDTO;
 import com.sensedia.sample.consents.exception.ResourceNotFoundException;
 import com.sensedia.sample.consents.mapper.ConsentMapper;
+import com.sensedia.sample.consents.repository.ConsentLogRepository;
 import com.sensedia.sample.consents.repository.ConsentRepository;
 
 import lombok.AllArgsConstructor;
@@ -24,12 +28,17 @@ import reactor.core.publisher.Mono;
 public class ConsentService {
 
 	ConsentMapper mapper;
+
 	ConsentRepository repository;
 
+	ConsentLogRepository logRepository;
+
 	public Mono<ConsentResponseDTO> create(ConsentRequestCreateDTO dto) {
-		return Mono.just(mapper.toEntity(dto))
-				.doOnNext(consent -> consent.setId(UUID.randomUUID()))
-				.flatMap(repository::save)
+		Consent newConsent = mapper.toEntity(dto);
+		newConsent.setId(UUID.randomUUID());
+		return repository.save(newConsent)
+				.flatMap(savedConsent -> logChange(savedConsent, ActionType.CREATED, "Consent created successfully.")
+						.thenReturn(savedConsent))
 				.map(mapper::toResponseDTO);
 	}
 
@@ -58,22 +67,37 @@ public class ConsentService {
 	}
 
 	public Mono<ConsentResponseDTO> update(String id, ConsentRequestUpdateDTO dto) {
-
 		return repository.findById(UUID.fromString(id))
 				.switchIfEmpty(Mono.error(new ResourceNotFoundException("Consent not found with id: " + id)))
 				.map(consent -> mapper.merge(dto, consent))
 				.flatMap(repository::save)
+				.flatMap(updatedConsent -> logChange(updatedConsent, ActionType.UPDATED, "Consent details updated.")
+						.thenReturn(updatedConsent))
 				.map(mapper::toResponseDTO);
 	}
 
 	public Mono<Void> delete(String id) {
 		UUID uuid = UUID.fromString(id);
-		return repository.existsById(uuid)
-				.flatMap(exists -> {
-					if (exists) {
-						return repository.deleteById(uuid);
-					}
-					return Mono.error(new ResourceNotFoundException("Consent not found with id: " + id));
-				});
+		return repository.findById(uuid)
+				.switchIfEmpty(Mono.error(new ResourceNotFoundException("Consent not found with id: " + id)))
+				.flatMap(consentToRevoke -> repository.delete(consentToRevoke)
+						.then(logChange(consentToRevoke, ActionType.DELETED, "Consent has been deleted.")))
+				.then();
+	}
+
+	private Mono<Void> logChange(Consent consent, ActionType action, String details) {
+		ConsentLog logEntry = ConsentLog.builder()
+				.id(UUID.randomUUID())
+				.consentId(consent.getId())
+				.action(action)
+				.details(details)
+				.build();
+
+		return logRepository.save(logEntry)
+				.doOnSuccess(savedLog -> log.info("Successfully logged action [{}] for consent ID [{}]", action,
+						consent.getId()))
+				.doOnError(error -> log.error("Failed to log action [{}] for consent ID [{}]: {}", action,
+						consent.getId(), error.getMessage()))
+				.then();
 	}
 }

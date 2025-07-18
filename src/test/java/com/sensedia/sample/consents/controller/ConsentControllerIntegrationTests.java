@@ -1,14 +1,17 @@
 package com.sensedia.sample.consents.controller;
 
+import com.sensedia.sample.consents.domain.ActionType;
 import com.sensedia.sample.consents.domain.Consent;
 import com.sensedia.sample.consents.domain.ConsentStatus;
 import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 import com.sensedia.sample.consents.dto.PageDTO;
+import com.sensedia.sample.consents.repository.ConsentLogRepository;
 import com.sensedia.sample.consents.repository.ConsentRepository;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,33 +61,41 @@ class ConsentControllerIntegrationTests {
 	@Autowired
 	private ConsentRepository consentRepository;
 
+	@Autowired
+	private ConsentLogRepository consentLogRepository;
+
 	@BeforeEach
 	void setUp() {
 		consentRepository.deleteAll().block();
+		consentLogRepository.deleteAll().block();
 	}
 
 	@Test
-	@DisplayName("POST /consents - Deve criar um consentimento com sucesso e retornar 201 Created")
-	void shouldCreateConsentSuccessfully() {
+	@DisplayName("POST /consents - Deve criar um consentimento e um log de criação")
+	void shouldCreateConsentSuccessfullyAndLogIt() {
 		ConsentRequestCreateDTO request = new ConsentRequestCreateDTO(
 				CPF_VALIDO_1,
 				ConsentStatus.ACTIVE,
 				LocalDateTime.now().plusDays(30),
 				INFO_TESTE_1);
 
-		webTestClient.post()
+		ConsentResponseDTO createdConsent = webTestClient.post()
 				.uri(API_URL)
 				.contentType(MediaType.APPLICATION_JSON)
 				.bodyValue(request)
 				.exchange()
 				.expectStatus().isCreated()
 				.expectBody(ConsentResponseDTO.class)
-				.value(response -> {
-					assertNotNull(response.id());
-					assertNotNull(response.creationDateTime());
-					assertEquals(request.cpf(), response.cpf());
-					assertEquals(request.status(), response.status());
-				});
+				.returnResult()
+				.getResponseBody();
+
+		assertNotNull(createdConsent);
+		assertEquals(request.cpf(), createdConsent.cpf());
+
+		StepVerifier.create(consentLogRepository.findAll())
+				.expectNextMatches(log -> log.getConsentId().equals(createdConsent.id()) &&
+						log.getAction() == ActionType.CREATED)
+				.verifyComplete();
 	}
 
 	@Test
@@ -202,6 +213,14 @@ class ConsentControllerIntegrationTests {
 		assertNotNull(updatedInDb);
 		assertEquals(ConsentStatus.REVOKED, updatedInDb.getStatus());
 		assertNotNull(updatedInDb.getCpf());
+
+		boolean exists = consentLogRepository.findAll()
+				.any(consentLog -> consentLog.getConsentId().equals(beforeUpdatedInDb.getId())
+						&& consentLog.getAction() == ActionType.UPDATED)
+				.block();
+
+		assertTrue(exists);
+
 	}
 
 	@Test
@@ -247,9 +266,12 @@ class ConsentControllerIntegrationTests {
 				.exchange()
 				.expectStatus().isNoContent();
 
-		Boolean exists = consentRepository.existsById(savedConsent.getId()).block();
-		assertNotNull(exists);
-		assertFalse(exists, "Consent should have been deleted from the database");
+		boolean exists = consentLogRepository.findAll()
+				.any(consentLog -> consentLog.getConsentId().equals(savedConsent.getId())
+						&& consentLog.getAction() == ActionType.DELETED)
+				.block();
+
+		assertTrue(exists);
 	}
 
 	@Test
