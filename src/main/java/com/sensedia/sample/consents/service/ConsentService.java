@@ -1,10 +1,13 @@
 package com.sensedia.sample.consents.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
@@ -23,7 +26,6 @@ import reactor.core.publisher.Mono;
 public class ConsentService {
 
 	ConsentMapper mapper;
-
 	ConsentRepository repository;
 
 	public Mono<ConsentResponseDTO> create(ConsentRequestCreateDTO dto) {
@@ -35,6 +37,7 @@ public class ConsentService {
 
 	public Mono<ConsentResponseDTO> getById(String id) {
 		return repository.findById(UUID.fromString(id))
+				.switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found")))
 				.map(mapper::toResponseDTO);
 	}
 
@@ -53,15 +56,27 @@ public class ConsentService {
 							content.size(),
 							totalElements,
 							totalPages);
-
 				});
 	}
 
 	public Mono<ConsentResponseDTO> update(String id, ConsentRequestUpdateDTO dto) {
+
 		return repository.findById(UUID.fromString(id))
+				.switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found")))
 				.map(consent -> mapper.merge(dto, consent))
 				.flatMap(repository::save)
 				.map(mapper::toResponseDTO);
 	}
 
+	public Mono<Void> delete(String id) {
+		UUID uuid = UUID.fromString(id);
+		return repository.existsById(uuid)
+				.flatMap(exists -> {
+					if (exists) {
+						return repository.deleteById(uuid);
+					} else {
+						return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found"));
+					}
+				});
+	}
 }

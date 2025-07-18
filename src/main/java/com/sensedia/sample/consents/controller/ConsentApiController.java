@@ -60,8 +60,7 @@ public class ConsentApiController implements IConsentApiController {
 
 	@Override
 	public Mono<Void> delete(String id) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'delete'");
+		return service.delete(id);
 	}
 
 }
