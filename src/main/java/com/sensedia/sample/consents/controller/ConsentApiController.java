@@ -55,8 +55,7 @@ public class ConsentApiController implements IConsentApiController {
 
 	@Override
 	public Mono<ConsentResponseDTO> update(String id, @Valid ConsentRequestUpdateDTO request) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'update'");
+		return service.update(id, request);
 	}
 
 	@Override

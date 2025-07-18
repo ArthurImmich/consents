@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
+import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 import com.sensedia.sample.consents.dto.PageDTO;
 import com.sensedia.sample.consents.mapper.ConsentMapper;
@@ -54,6 +55,13 @@ public class ConsentService {
 							totalPages);
 
 				});
+	}
+
+	public Mono<ConsentResponseDTO> update(String id, ConsentRequestUpdateDTO dto) {
+		return repository.findById(UUID.fromString(id))
+				.map(consent -> mapper.merge(dto, consent))
+				.flatMap(repository::save)
+				.map(mapper::toResponseDTO);
 	}
 
 }
