@@ -8,15 +8,16 @@ import com.sensedia.sample.consents.domain.ConsentStatus;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ConsentRequestCreateDTO(
 
 		@CPF @NotBlank String cpf,
 
-		@NotBlank ConsentStatus status,
+		@NotNull ConsentStatus status,
 
-		@NotBlank @Future LocalDateTime expirationDateTime,
+		@NotNull @Future LocalDateTime expirationDateTime,
 
 		@Size(min = 1, max = 50) String additionalInfo
 
