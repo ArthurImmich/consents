@@ -1,18 +1,16 @@
 package com.sensedia.sample.consents.service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 import com.sensedia.sample.consents.dto.PageDTO;
+import com.sensedia.sample.consents.exception.ResourceNotFoundException;
 import com.sensedia.sample.consents.mapper.ConsentMapper;
 import com.sensedia.sample.consents.repository.ConsentRepository;
 
@@ -37,7 +35,7 @@ public class ConsentService {
 
 	public Mono<ConsentResponseDTO> getById(String id) {
 		return repository.findById(UUID.fromString(id))
-				.switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found")))
+				.switchIfEmpty(Mono.error(new ResourceNotFoundException("Consent not found with id: " + id)))
 				.map(mapper::toResponseDTO);
 	}
 
@@ -62,7 +60,7 @@ public class ConsentService {
 	public Mono<ConsentResponseDTO> update(String id, ConsentRequestUpdateDTO dto) {
 
 		return repository.findById(UUID.fromString(id))
-				.switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found")))
+				.switchIfEmpty(Mono.error(new ResourceNotFoundException("Consent not found with id: " + id)))
 				.map(consent -> mapper.merge(dto, consent))
 				.flatMap(repository::save)
 				.map(mapper::toResponseDTO);
@@ -74,9 +72,8 @@ public class ConsentService {
 				.flatMap(exists -> {
 					if (exists) {
 						return repository.deleteById(uuid);
-					} else {
-						return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Consent not found"));
 					}
+					return Mono.error(new ResourceNotFoundException("Consent not found with id: " + id));
 				});
 	}
 }
