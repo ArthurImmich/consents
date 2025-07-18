@@ -64,7 +64,7 @@ class ConsentControllerIntegrationTests {
 	}
 
 	@Test
-	@DisplayName("POST /consents - Deve criar um consentimento com sucesso e retornar 21 Created")
+	@DisplayName("POST /consents - Deve criar um consentimento com sucesso e retornar 201 Created")
 	void shouldCreateConsentSuccessfully() {
 		ConsentRequestCreateDTO request = new ConsentRequestCreateDTO(
 				CPF_VALIDO_1,
@@ -124,6 +124,15 @@ class ConsentControllerIntegrationTests {
 					assertEquals(savedConsent.getId(), response.id());
 					assertEquals(CPF_VALIDO_2, response.cpf());
 				});
+	}
+
+	@Test
+	@DisplayName("GET /consents/{id} - Deve retornar 404 Not Found para ID inexistente")
+	void shouldReturnNotFoundForNonExistentConsent() {
+		webTestClient.get()
+				.uri(API_URL + "/{id}", UUID.randomUUID())
+				.exchange()
+				.expectStatus().isNotFound();
 	}
 
 	@Test
@@ -196,10 +205,40 @@ class ConsentControllerIntegrationTests {
 	}
 
 	@Test
+	@DisplayName("PUT /consents/{id} - Deve retornar 404 Not Found ao tentar atualizar um consentimento inexistente")
+	void shouldReturnNotFoundWhenUpdatingNonExistentConsent() {
+		ConsentRequestUpdateDTO request = new ConsentRequestUpdateDTO(null, ConsentStatus.REVOKED, null, null);
+
+		webTestClient.put()
+				.uri(API_URL + "/{id}", UUID.randomUUID())
+				.contentType(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.exchange()
+				.expectStatus().isNotFound();
+	}
+
+	@Test
+	@DisplayName("PUT /consents/{id} - Deve retornar 400 Bad Request para CPF inválido")
+	void shouldReturnBadRequestWhenUpdatingWithInvalidCpf() {
+		Consent savedConsent = consentRepository
+				.save(Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_1).status(ConsentStatus.ACTIVE).build())
+				.block();
+
+		ConsentRequestUpdateDTO request = new ConsentRequestUpdateDTO("123456789", ConsentStatus.REVOKED, null, null);
+
+		webTestClient.put()
+				.uri(API_URL + "/{id}", savedConsent.getId())
+				.contentType(MediaType.APPLICATION_JSON)
+				.bodyValue(request)
+				.exchange()
+				.expectStatus().isBadRequest();
+	}
+
+	@Test
 	@DisplayName("DELETE /consents/{id} - Deve excluir um consentimento e retornar 204 No Content")
 	void shouldDeleteConsent() {
 		Consent savedConsent = consentRepository
-				.save(Consent.builder().cpf(CPF_VALIDO_2).status(ConsentStatus.ACTIVE).build())
+				.save(Consent.builder().id(UUID.randomUUID()).cpf(CPF_VALIDO_2).status(ConsentStatus.ACTIVE).build())
 				.block();
 		assertNotNull(savedConsent);
 
@@ -211,5 +250,14 @@ class ConsentControllerIntegrationTests {
 		Boolean exists = consentRepository.existsById(savedConsent.getId()).block();
 		assertNotNull(exists);
 		assertFalse(exists, "Consent should have been deleted from the database");
+	}
+
+	@Test
+	@DisplayName("DELETE /consents/{id} - Deve retornar 404 Not Found ao tentar deletar consentimento inexistente")
+	void shouldReturnNotFoundWhenDeletingNonExistentConsent() {
+		webTestClient.delete()
+				.uri(API_URL + "/{id}", UUID.randomUUID())
+				.exchange()
+				.expectStatus().isNotFound();
 	}
 }
