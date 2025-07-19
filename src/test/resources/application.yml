@@ -1,4 +1,8 @@
 spring:
-  jackson:
-    serialization:
-      WRITE_DATES_AS_TIMESTAMPS: true
+  data:
+    mongodb:
+      uri: "mongodb://dummy-uri-for-tests"
+
+logging:
+  level:
+    com.sensedia.sample: INFO

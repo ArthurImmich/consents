@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://root:example@localhost:27017/consentsdb?authSource=admin
+
+logging:
+  level:
+    com.sensedia.sample: DEBUG
+    root: INFO
