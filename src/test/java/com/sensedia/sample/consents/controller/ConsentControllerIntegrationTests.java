@@ -79,7 +79,7 @@ class ConsentControllerIntegrationTests {
 				CPF_VALIDO_1,
 				ConsentStatus.ACTIVE,
 				LocalDateTime.now().plusDays(30),
-				INFO_TESTE_1);
+				null);
 
 		ConsentResponseDTO createdConsent = webTestClient.post()
 				.uri(API_URL)
@@ -92,6 +92,7 @@ class ConsentControllerIntegrationTests {
 				.getResponseBody();
 
 		assertNotNull(createdConsent);
+		assertNotNull(createdConsent.additionalInfo());
 		assertEquals(request.cpf(), createdConsent.cpf());
 
 		StepVerifier.create(consentLogRepository.findAll())

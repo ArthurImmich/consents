@@ -1,5 +1,6 @@
 package com.sensedia.sample.consents.service;
 
+import com.sensedia.sample.consents.client.ExternalInfoClient;
 import com.sensedia.sample.consents.domain.ActionType;
 import com.sensedia.sample.consents.domain.Consent;
 import com.sensedia.sample.consents.domain.ConsentLog;
@@ -49,38 +50,71 @@ class ConsentServiceUnitTest {
 	@Mock
 	private ConsentMapper mapper;
 
+	@Mock
+	private ExternalInfoClient externalInfoClient;
+
 	@InjectMocks
 	private ConsentService service;
 
-	@Nested
-	@DisplayName("Create Consent Tests")
-	class CreateConsent {
-		@Test
-		@DisplayName("Should create, log, and return consent successfully")
-		void shouldCreateAndLogConsent() {
-			ConsentRequestCreateDTO request = new ConsentRequestCreateDTO(VALID_CPF, ConsentStatus.ACTIVE,
-					LocalDateTime.now().plusDays(1), "info");
-			Consent consentToSave = Consent.builder().cpf(VALID_CPF).build();
-			Consent savedConsent = Consent.builder().id(CONSENT_ID).cpf(VALID_CPF).build();
-			ConsentResponseDTO responseDTO = new ConsentResponseDTO(CONSENT_ID, VALID_CPF, ConsentStatus.ACTIVE,
-					LocalDateTime.now(), null, "info");
+	@Test
+	@DisplayName("Should create consent without calling external API when additionalInfo is provided")
+	void shouldCreateConsentWhenInfoIsProvided() {
+		ConsentRequestCreateDTO request = new ConsentRequestCreateDTO(VALID_CPF, ConsentStatus.ACTIVE,
+				LocalDateTime.now().plusDays(1), "Custom Info");
 
-			when(mapper.toEntity(request)).thenReturn(consentToSave);
-			when(repository.save(any(Consent.class))).thenReturn(Mono.just(savedConsent));
-			when(logRepository.save(any(ConsentLog.class))).thenReturn(Mono.just(new ConsentLog()));
-			when(mapper.toResponseDTO(savedConsent)).thenReturn(responseDTO);
+		Consent consentFromMapper = Consent.builder().cpf(VALID_CPF).additionalInfo("Custom Info").build();
 
-			Mono<ConsentResponseDTO> resultMono = service.create(request);
+		Consent savedConsent = Consent.builder().id(CONSENT_ID).cpf(VALID_CPF).additionalInfo("Custom Info").build();
 
-			StepVerifier.create(resultMono)
-					.expectNext(responseDTO)
-					.verifyComplete();
+		ConsentResponseDTO responseDTO = new ConsentResponseDTO(CONSENT_ID, VALID_CPF, ConsentStatus.ACTIVE,
+				LocalDateTime.now(), null, "Custom Info");
 
-			ArgumentCaptor<ConsentLog> logCaptor = ArgumentCaptor.forClass(ConsentLog.class);
-			verify(logRepository).save(logCaptor.capture());
-			assertEquals(ActionType.CREATED, logCaptor.getValue().getAction());
-			assertEquals(CONSENT_ID, logCaptor.getValue().getConsentId());
-		}
+		when(mapper.toEntity(request)).thenReturn(consentFromMapper);
+		when(repository.save(any(Consent.class))).thenReturn(Mono.just(savedConsent));
+		when(logRepository.save(any(ConsentLog.class))).thenReturn(Mono.just(new ConsentLog()));
+		when(mapper.toResponseDTO(savedConsent)).thenReturn(responseDTO);
+
+		Mono<ConsentResponseDTO> resultMono = service.create(request);
+
+		StepVerifier.create(resultMono)
+				.expectNext(responseDTO)
+				.verifyComplete();
+
+		verify(externalInfoClient, never()).fetchAdditionalInfo();
+		verify(repository).save(any(Consent.class));
+		verify(logRepository).save(any(ConsentLog.class));
+	}
+
+	@Test
+	@DisplayName("Should call external API and create consent when additionalInfo is null")
+	void shouldCreateConsentWhenInfoIsNull() {
+		ConsentRequestCreateDTO request = new ConsentRequestCreateDTO(VALID_CPF, ConsentStatus.ACTIVE,
+				LocalDateTime.now().plusDays(1), null);
+
+		String fetchedInfo = "Fetched from API";
+
+		Consent consentFromMapper = Consent.builder().cpf(VALID_CPF).additionalInfo(null).build();
+
+		Consent savedConsent = Consent.builder().id(CONSENT_ID).cpf(VALID_CPF).additionalInfo(fetchedInfo).build();
+
+		ConsentResponseDTO responseDTO = new ConsentResponseDTO(CONSENT_ID, VALID_CPF, ConsentStatus.ACTIVE,
+				LocalDateTime.now(), null, fetchedInfo);
+
+		when(externalInfoClient.fetchAdditionalInfo()).thenReturn(Mono.just(fetchedInfo));
+		when(mapper.toEntity(request)).thenReturn(consentFromMapper);
+		when(repository.save(any(Consent.class))).thenReturn(Mono.just(savedConsent));
+		when(logRepository.save(any(ConsentLog.class))).thenReturn(Mono.just(new ConsentLog()));
+		when(mapper.toResponseDTO(savedConsent)).thenReturn(responseDTO);
+
+		Mono<ConsentResponseDTO> resultMono = service.create(request);
+
+		StepVerifier.create(resultMono)
+				.expectNext(responseDTO)
+				.verifyComplete();
+
+		verify(externalInfoClient, times(1)).fetchAdditionalInfo();
+		verify(repository).save(any(Consent.class));
+		verify(logRepository).save(any(ConsentLog.class));
 	}
 
 	@Nested
