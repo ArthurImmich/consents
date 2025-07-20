@@ -1,5 +1,7 @@
 package com.sensedia.sample.consents.domain;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,9 +10,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,15 +17,13 @@ import java.util.UUID;
 @Document(collection = "consent_logs")
 public class ConsentLog {
 
-	@Id
-	private UUID id;
+  @Id private UUID id;
 
-	private UUID consentId;
+  private UUID consentId;
 
-	private ActionType action;
+  private ActionType action;
 
-	@CreatedDate
-	private LocalDateTime timestamp;
+  @CreatedDate private LocalDateTime timestamp;
 
-	private String details;
+  private String details;
 }
