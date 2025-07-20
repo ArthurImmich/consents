@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s # Captura os alvos a cada 15 segundos.
+
+scrape_configs:
+  - job_name: 'spring-boot-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['consent_api:8099'] # 'consent_api' é o nome do serviço no docker-compose.yml

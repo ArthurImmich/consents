@@ -1,11 +1,13 @@
 package com.sensedia.sample.consents.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.sensedia.sample.consents.client.ExternalInfoClient;
 import com.sensedia.sample.consents.domain.ActionType;
 import com.sensedia.sample.consents.domain.Consent;
 import com.sensedia.sample.consents.domain.ConsentLog;
@@ -18,25 +20,39 @@ import com.sensedia.sample.consents.mapper.ConsentMapper;
 import com.sensedia.sample.consents.repository.ConsentLogRepository;
 import com.sensedia.sample.consents.repository.ConsentRepository;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import reactor.core.publisher.Mono;
 
 @Service
 @Log4j2
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ConsentService {
 
-	ConsentMapper mapper;
+	private final ConsentMapper mapper;
 
-	ConsentRepository repository;
+	private final ConsentRepository repository;
 
-	ConsentLogRepository logRepository;
+	private final ConsentLogRepository logRepository;
+
+	private final ExternalInfoClient externalInfoClient;
 
 	public Mono<ConsentResponseDTO> create(ConsentRequestCreateDTO dto) {
-		Consent newConsent = mapper.toEntity(dto);
-		newConsent.setId(UUID.randomUUID());
-		return repository.save(newConsent)
+		final Consent consent = mapper.toEntity(dto);
+		consent.setId(UUID.randomUUID());
+
+		return Mono.defer(() -> {
+			if (Objects.nonNull(consent.getAdditionalInfo())) {
+				log.info("additionalInfo provided in DTO. Skipping external API call.");
+				return Mono.just(consent);
+			}
+			log.info("additionalInfo is null. Calling external API.");
+			return externalInfoClient.fetchAdditionalInfo()
+					.map(fetchedInfo -> {
+						consent.setAdditionalInfo(fetchedInfo);
+						return consent;
+					});
+		}).flatMap(repository::save)
 				.flatMap(savedConsent -> logChange(savedConsent, ActionType.CREATED, "Consent created successfully.")
 						.thenReturn(savedConsent))
 				.map(mapper::toResponseDTO);
