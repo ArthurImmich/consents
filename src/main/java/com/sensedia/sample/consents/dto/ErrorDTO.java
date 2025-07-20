@@ -6,28 +6,12 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorDTO(
+    LocalDateTime timestamp,
+    int status,
+    String error,
+    String message,
+    String path,
+    List<ValidationError> errors) {
 
-		LocalDateTime timestamp,
-
-		int status,
-
-		String error,
-
-		String message,
-
-		String path,
-
-		List<ValidationError> errors
-
-) {
-
-	public record ValidationError(
-
-			String field,
-
-			String message
-
-	) {
-	}
-
+  public record ValidationError(String field, String message) {}
 }

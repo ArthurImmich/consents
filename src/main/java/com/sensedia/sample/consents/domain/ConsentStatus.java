@@ -1,10 +1,9 @@
 package com.sensedia.sample.consents.domain;
 
-public enum ConsentStatus { 
+public enum ConsentStatus {
+  ACTIVE,
 
-    ACTIVE, 
-    
-    REVOKED, 
-    
-    EXPIRED 
+  REVOKED,
+
+  EXPIRED
 }
