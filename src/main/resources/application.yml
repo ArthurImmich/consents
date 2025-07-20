@@ -1,0 +1,23 @@
+server:
+  port: 8099
+
+spring:
+  application:
+    name: consents
+  profiles:
+    active: dev
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"
