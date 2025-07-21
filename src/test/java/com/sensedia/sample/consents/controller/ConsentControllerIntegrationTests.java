@@ -9,6 +9,7 @@ import com.sensedia.sample.consents.dto.ConsentRequestCreateDTO;
 import com.sensedia.sample.consents.dto.ConsentRequestUpdateDTO;
 import com.sensedia.sample.consents.dto.ConsentResponseDTO;
 import com.sensedia.sample.consents.dto.PageDTO;
+import com.sensedia.sample.consents.mapper.CpfMapperUtil;
 import com.sensedia.sample.consents.repository.ConsentLogRepository;
 import com.sensedia.sample.consents.repository.ConsentRepository;
 import java.time.LocalDateTime;
@@ -89,7 +90,7 @@ class ConsentControllerIntegrationTests {
 
     assertNotNull(createdConsent);
     assertNotNull(createdConsent.additionalInfo());
-    assertEquals(request.cpf(), createdConsent.cpf());
+    assertEquals(CpfMapperUtil.onlyDigits(request.cpf()), createdConsent.cpf());
 
     StepVerifier.create(consentLogRepository.findAll())
         .expectNextMatches(
