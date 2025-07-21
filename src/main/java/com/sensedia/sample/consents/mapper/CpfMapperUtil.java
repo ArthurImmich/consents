@@ -4,8 +4,8 @@ import org.mapstruct.Named;
 
 public class CpfMapperUtil {
 
-	@Named("onlyDigits")
-	public static String onlyDigits(String cpf) {
-		return cpf == null ? null : cpf.replaceAll("\\D", "");
-	}
+  @Named("onlyDigits")
+  public static String onlyDigits(String cpf) {
+    return cpf == null ? null : cpf.replaceAll("\\D", "");
+  }
 }
