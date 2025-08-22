@@ -106,7 +106,7 @@ public interface IConsentApiController {
         description = "Consent not found",
         content = @Content(schema = @Schema(implementation = ErrorDTO.class)))
   })
-  @PutMapping("/{id}")
+  @PatchMapping("/{id}")
   Mono<ConsentResponseDTO> update(
       @Parameter(
               description = "UUID of the consent to update",
